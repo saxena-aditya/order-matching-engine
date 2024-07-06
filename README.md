@@ -31,7 +31,7 @@ For the scope of this service, each node can send message to itself and other no
    * `COIN` - Type of Coin/stock you are trading, eg. BTC
    * `QUANTITY` - Quantity of coin, eg. 5
    * `PRICE` - Price/cost of one coin. eg. 30
- * To simulate multple trade, execute above command in multiple terminates, each terminal acts as a node in this exchange engine.
+ * To simulate multple trade, execute above command in multiple terminals, each terminal acts as a node in this exchange engine.
  * Once processing is complete, final snapshot of order book can be found in root directory in `.json` file. There will be `x` files if `x` nodes are there in the network executing trades. 
   
 > NOTE: Implementation uses `crypto.randomInt()` to generate random reader friendly values. It takes a maxium integer to generate random values, which is kept `100`. So, make sure you don't create more than 100 orders per node or more than 100 node in the network.
