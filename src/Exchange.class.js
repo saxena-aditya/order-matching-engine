@@ -1,6 +1,8 @@
 const crypto = require('crypto');
+const Order = require('./models/Order.class');
 const OrderBook = require('./models/OrderBook.class');
 const { PeerRPCServer, PeerRPCClient } = require('grenache-nodejs-http');
+const { debugPrint } = require('./util');
 const BROADCAST_SIGNAL = "broadcast";
 
 class Exchange {

@@ -10,6 +10,14 @@ const link = new Link({
 const exchange = new Exchange(link, port);
 exchange.init();
 
-if(process.argv[3] == 1) {
-    exchange.broadcast();
+// sample - $node sim.js 1338 exec buy BTC 2 1000
+const operations = {
+    type: process.argv[4],
+    coin: process.argv[5],
+    quantity: parseInt(process.argv[7]),
+    price: parseInt(process.argv[6]),
+}
+
+if(process.argv[3] === 'exec') {
+    exchange.placeOrder(operations);
 }
