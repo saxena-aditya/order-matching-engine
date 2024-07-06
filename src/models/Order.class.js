@@ -11,7 +11,7 @@ class Order {
         this.quantity = quantity;
         this.originalQuantity = quantity;
         this.filledQuantity = 0;
-        this.matchedOrders = [];
+        this.matchedOrderList = [];
 
         // exchange-id where the order was placed.
         this.exchangeId = exchangeId;
