@@ -26,6 +26,11 @@ class Exchange {
         console.log("Exchange running: ", this.exchangeId);
     }
 
+    placeOrder({type, coin, quantity, price}) {
+        const order = new Order(type, coin, quantity, price, this.exchangeId);
+        this.orderBook.addOrder(order);
+    }
+
     onRequest(rid, key, payload, handler) {
         console.log("Got request", {rid, key, payload});
         handler.reply(null, {});
