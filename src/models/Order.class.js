@@ -19,6 +19,7 @@ class Order {
     }
 
     validateOrder(type) {
+        // TODO: Extend validations on order here.
         if(!(type in ORDER_TYPE))
             throw `Order type: ${type} is not supported by the Exchange`;
     }

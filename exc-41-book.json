@@ -1,0 +1,1 @@
+{"buyOrders":{"BTC":[]},"sellOrders":{"BTC":[]},"filledOrders":[{"id":99,"type":"BUY","coin":"BTC","price":1000,"quantity":5,"originalQuantity":5,"filledQuantity":5,"matchedOrderList":[{"id":71,"type":"SELL","coin":"BTC","price":1000,"quantity":5,"originalQuantity":5,"filledQuantity":0,"matchedOrderList":[],"exchangeId":"exc-44"}],"exchangeId":"exc-41"}],"matchedOrderQueue":{}}
