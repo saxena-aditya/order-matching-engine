@@ -86,18 +86,6 @@ class Exchange {
                 const matchingOrders = this.orderBook.findMatchingOrders(payload.order)
                 handler.reply(null, matchingOrders);
                 break;
-            case MESSAGE_TYPE.FILL_ORDER:
-                const order = this.orderBook.getOrderById(payload.fillOrder.id);
-                order.quantity -= payload.fillOrder.quantity;
-                order.filledQuantity += payload.fillOrder.quantity;
-                order.matchedOrderList.push(payload.matchedOrder);
-                if(order.quantity === 0) {
-                    // order is completely filled so remove it and add in filled orders
-                    this.orderBook.filledOrderList.push(order);
-                    this.orderBook.removeOrder(payload.fillOrder);
-                }
-                handler.reply(null, true);
-                break;
             default:
                 break;
         }  
