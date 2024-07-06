@@ -10,8 +10,6 @@ For the scope of this service, each node can send message to itself and other no
 ## Sequence Diagram
 <img src='docs/assets/sequence_diagram.png'>
 
-### Execution Flow
-
 
 
 # Functional Requirements 
