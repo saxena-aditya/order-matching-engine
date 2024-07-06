@@ -5,8 +5,8 @@ const MESSAGE_TYPE = Object.freeze({
 });
 
 const ORDER_TYPE = Object.freeze({
-    BUY: 'buy',
-    SELL: 'sell'
+    BUY: 'BUY',
+    SELL: 'SELL'
 });
 
 module.exports = {

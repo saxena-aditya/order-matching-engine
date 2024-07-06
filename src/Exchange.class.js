@@ -31,6 +31,9 @@ class Exchange {
     placeOrder({type, coin, quantity, price}) {
         const order = new Order(type, coin, quantity, price, this.exchangeId);
         this.orderBook.addOrder(order);
+
+        const unfilledOrder = this.orderBook.matchOrder(order);
+        console.log("unfilledOrder: ", unfilledOrder)
     }
 
     onRequest(rid, key, payload, handler) {
