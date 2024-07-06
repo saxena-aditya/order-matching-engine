@@ -1,3 +1,5 @@
+'use strict'
+
 const crypto = require('crypto');
 const Order = require('./models/Order.class');
 const OrderBook = require('./models/OrderBook.class');
@@ -158,8 +160,6 @@ class Exchange {
                             this.orderBook.removeOrder(unfulfilledOrder);
                             console.log("ORDER_FILLED:", unfulfilledOrder);
                         }
-                    } else {
-                        throw `Something went wrong while connecting to ${matchedOrder.exchangeId}`;
                     }
                 } catch (err) {
                     console.log(err);

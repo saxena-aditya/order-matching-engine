@@ -1,3 +1,5 @@
+'use strict'
+
 const Link = require("grenache-nodejs-link");
 const Exchange = require("./src/Exchange.class");
 const { writeFileSync } = require('fs');

@@ -1,3 +1,5 @@
+'use strict'
+
 const { searchOrderByOrderId, debugPrint } = require('../util');
 const { ORDER_TYPE } = require('../constants');
 

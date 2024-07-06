@@ -1,3 +1,5 @@
+'use strict'
+
 const MESSAGE_TYPE = Object.freeze({
     ORDER_PLACED: 'order_placed',
     ORDER_FILLED: 'order_filled',

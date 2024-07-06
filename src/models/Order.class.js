@@ -1,3 +1,5 @@
+'use strict'
+
 const crypto = require('crypto');
 const { ORDER_TYPE } = require('../constants');
 
