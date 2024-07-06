@@ -1,4 +1,4 @@
-const searchOrderByOrderId = require('../util');
+const { searchOrderByOrderId, debugPrint } = require('../util');
 const { ORDER_TYPE } = require('../constants');
 
 class OrderBook {
@@ -32,16 +32,16 @@ class OrderBook {
     }
 
     removeOrder(order) {
-        if(order.orderType === ORDER_TYPE.BUY) {
-            this.buyOrders[order.coin] = this.buyOrders[order.coin].filter(o => o.orderId !== order.orderId);
+        if(order.type === ORDER_TYPE.BUY) {
+            this.buyOrders[order.coin] = this.buyOrders[order.coin].filter(o => o.id !== order.id);
         } else {
-            this.sellOrders[order.coin] = this.sellOrders[order.coin].filter(o => o.orderId !== order.orderId);
+            this.sellOrders[order.coin] = this.sellOrders[order.coin].filter(o => o.id !== order.id);
         }
     }
 
     /**
      * Mathes orders with present orders in the current exchange.
-     * @param order
+     * @param   order
      * @returns un-filled order or undefined in case of complete match
      */
     matchOrder(order) {
@@ -91,7 +91,7 @@ class OrderBook {
 
     /**
      * Tries to find matching orders w.r.t the given order.
-     * @param type, coin, price
+     * @param   type, coin, price
      * @returns List of matching order or empty list if no match found
      */ 
     findMatchingOrders({type, coin, price}) {
@@ -108,7 +108,7 @@ class OrderBook {
         return {
             buyOrders: this.buyOrders,
             sellOrders: this.sellOrders,
-            filledOrders: this.filledOrder,
+            filledOrders: this.filledOrderList,
             matchedOrderQueue: this.matchedOrdersQueue
         };
     }

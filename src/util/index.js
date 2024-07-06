@@ -6,7 +6,7 @@ const debugPrint = (data) => {
 
 const searchOrderByOrderId = (orderData, orderId) => {
     for(const [coin, orderList] of Object.entries(orderData)) {
-        const order = orderList.find(o.id == orderId);
+        const order = orderList.find((o) => o.id == orderId);
         return order;
     }
 

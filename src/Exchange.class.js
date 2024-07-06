@@ -2,8 +2,9 @@ const crypto = require('crypto');
 const Order = require('./models/Order.class');
 const OrderBook = require('./models/OrderBook.class');
 const { PeerRPCServer, PeerRPCClient } = require('grenache-nodejs-http');
-const { debugPrint } = require('./util');
 const { MESSAGE_TYPE } = require('./constants');
+const { debugPort } = require('process');
+const { debugPrint } = require('./util');
 const BROADCAST_SIGNAL = "broadcast";
 
 class Exchange {
@@ -26,6 +27,7 @@ class Exchange {
         this.client.init();
 
         this.link.startAnnouncing(BROADCAST_SIGNAL, this.port, {});
+        this.link.startAnnouncing(this.exchangeId, this.port, {})
         console.log("Exchange running: ", this.exchangeId);
     }
 
@@ -57,33 +59,136 @@ class Exchange {
             ));
 
             console.log("Matched order queue: ", this.orderBook.matchedOrdersQueue);
+            this.processMatchedOrderQueue();
 
         });
     }
 
     onRequest(rid, key, payload, handler) {
-        console.log("request recieved", rid, key, this.exchangeId);
+        console.log("request recieved", rid, key, payload);
 
         switch (key) {
             case BROADCAST_SIGNAL:
                 this.handleBroadcastMessage(payload, handler);
+                break;
+            case this.exchangeId:
+                this.handleExchangeMessage(payload, handler);
                 break;
             default:
             break;
         }
     }
 
-    handleBroadcastMessage({messageType, order}, handler) {
+    handleBroadcastMessage(payload, handler) {
         // TODO: add handle for ORDER_CANCELED or other events
-        switch(messageType) {
+        switch(payload.messageType) {
             case MESSAGE_TYPE.ORDER_PLACED:
-                const matchingOrders = this.orderBook.findMatchingOrders(order)
+                const matchingOrders = this.orderBook.findMatchingOrders(payload.order)
                 handler.reply(null, matchingOrders);
+                break;
+            case MESSAGE_TYPE.FILL_ORDER:
+                const order = this.orderBook.getOrderById(payload.fillOrder.id);
+                order.quantity -= payload.fillOrder.quantity;
+                order.filledQuantity += payload.fillOrder.quantity;
+                order.matchedOrderList.push(payload.matchedOrder);
+                if(order.quantity === 0) {
+                    // order is completely filled so remove it and add in filled orders
+                    this.orderBook.filledOrderList.push(order);
+                    this.orderBook.removeOrder(payload.fillOrder);
+                }
+                handler.reply(null, true);
+                break;
+            default:
+                break;
+        }  
+    }
+
+    handleExchangeMessage(payload, handler) {
+        switch (payload.messageType) {
+            case MESSAGE_TYPE.FILL_ORDER:
+                const order = this.orderBook.getOrderById(payload.fillOrder.id);
+                order.quantity -= payload.fillOrder.quantity;
+                order.filledQuantity += payload.fillOrder.quantity;
+                order.matchedOrderList.push(payload.matchedOrder);
+                this.orderBook.filledOrderList.push({
+                    ...order,
+                    quantity: payload.fillOrder.quantity
+                });
+                if(order.quantity === 0) {
+                    // order is completely filled so remove it
+                    this.orderBook.removeOrder(payload.fillOrder);
+                }
+
+                console.log("Order:", order.id, " filling complete");
+                this.orderBook.getOrderBook();
+                handler.reply(null, true);
                 break;
             default:
                 break;
         }
-       
+        return;
+    }
+
+    async processMatchedOrderQueue() {
+        if(this.orderBook.matchedOrdersQueue.length === 0) return;
+
+        console.log("Processing matchedOrdersQueue, ", this.orderBook.matchedOrdersQueue);
+        for (const unfulfilledOrderId of Object.keys(this.orderBook.matchedOrdersQueue)) {
+            const matchedOrderList = this.orderBook.matchedOrdersQueue[unfulfilledOrderId];
+            const unfulfilledOrder = this.orderBook.getOrderById(unfulfilledOrderId);
+            console.debug("Found unfilled order details: ", unfulfilledOrderId);
+            if(!unfulfilledOrder) {
+                delete this.orderBook.matchedOrdersQueue[unfulfilledOrderId];
+            }
+            for(const matchedOrder of matchedOrderList) {
+                if(unfulfilledOrder.quantity === 0) {
+                    delete this.orderBook.matchedOrdersQueue[unfulfilledOrderId];
+                    break;
+                }
+
+                // When order is matched, make client call to Exchange to update their orderbook here
+                // Once call is success update this exchange's order book and order status
+                const quantityTraded = Math.min(unfulfilledOrder.quantity, matchedOrder.quantity);
+
+                const resp = await this.messageSourceExchange(matchedOrder.exchangeId, {
+                    messageType: MESSAGE_TYPE.FILL_ORDER,
+                    fillOrder: {
+                        ...matchedOrder,
+                        quantity: quantityTraded
+                    },
+                    matchedOrder: unfulfilledOrder
+                });
+
+                unfulfilledOrder.quantity -= quantityTraded;
+                unfulfilledOrder.filledQuantity += quantityTraded;
+                unfulfilledOrder.matchedOrderList.push(matchedOrder);
+                this.orderBook.filledOrderList.push({
+                    ...unfulfilledOrder,
+                    quantity: quantityTraded
+                });
+
+                console.log("exex,", unfulfilledOrder)
+
+                if(unfulfilledOrder.quantity === 0) {
+                    delete this.orderBook.matchedOrdersQueue[unfulfilledOrderId];
+                    this.orderBook.removeOrder(unfulfilledOrder);
+                    console.log("ORDER_FILLED:", unfulfilledOrder);
+                }
+            }
+        }
+    }
+
+    messageSourceExchange(exchangeId, payload) {
+        console.log("Making request to Exchange:", exchangeId);
+        return new Promise((resolve, reject) => {
+            this.client.request(exchangeId, payload, {},(err, result) => {
+               if(err) {
+                   reject(err);
+                   return;
+               }
+               resolve(result);
+            });
+        });
     }
 
     broadcast() {

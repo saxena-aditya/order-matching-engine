@@ -1,5 +1,6 @@
 const Link = require("grenache-nodejs-link");
 const Exchange = require("./src/Exchange.class");
+const { writeFileSync } = require('fs');
 
 const port = process.argv[2] | 1337;
 const link = new Link({
@@ -14,10 +15,14 @@ exchange.init();
 const operations = {
     type: process.argv[4],
     coin: process.argv[5],
-    quantity: parseInt(process.argv[7]),
-    price: parseInt(process.argv[6]),
+    quantity: parseInt(process.argv[6]),
+    price: parseInt(process.argv[7]),
 }
 
 if(process.argv[3] === 'exec') {
     exchange.placeOrder(operations);
+    setInterval(() => {
+        const orderBook = exchange.orderBook.getOrderBook();
+        writeFileSync(`${exchange.exchangeId}-book.json`, JSON.stringify(orderBook));
+    }, 3000);
 }
