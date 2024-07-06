@@ -90,6 +90,10 @@ class Exchange {
         switch (payload.messageType) {
             case MESSAGE_TYPE.FILL_ORDER:
                 const order = this.orderBook.getOrderById(payload.fillOrder.id);
+                if(!order) {
+                    handler.reply(null, false);
+                    return;
+                }
                 order.quantity -= payload.fillOrder.quantity;
                 order.filledQuantity += payload.fillOrder.quantity;
                 order.matchedOrderList.push(payload.matchedOrder);
@@ -130,32 +134,37 @@ class Exchange {
                 // Once call is success update this exchange's order book and order status
                 const quantityTraded = Math.min(unfulfilledOrder.quantity, matchedOrder.quantity);
 
-                const resp = await this.messageSourceExchange(matchedOrder.exchangeId, {
-                    messageType: MESSAGE_TYPE.FILL_ORDER,
-                    fillOrder: {
-                        ...matchedOrder,
-                        quantity: quantityTraded
-                    },
-                    matchedOrder: unfulfilledOrder
-                });
-
-                if(resp) {
-                    unfulfilledOrder.quantity -= quantityTraded;
-                    unfulfilledOrder.filledQuantity += quantityTraded;
-                    unfulfilledOrder.matchedOrderList.push(matchedOrder);
-                    this.orderBook.filledOrderList.push({
-                        ...unfulfilledOrder,
-                        quantity: quantityTraded
+                try {
+                    const resp = await this.messageSourceExchange(matchedOrder.exchangeId, {
+                        messageType: MESSAGE_TYPE.FILL_ORDER,
+                        fillOrder: {
+                            ...matchedOrder,
+                            quantity: quantityTraded
+                        },
+                        matchedOrder: unfulfilledOrder
                     });
-
-                    if(unfulfilledOrder.quantity === 0) {
-                        delete this.orderBook.matchedOrdersQueue[unfulfilledOrderId];
-                        this.orderBook.removeOrder(unfulfilledOrder);
-                        console.log("ORDER_FILLED:", unfulfilledOrder);
+    
+                    if(resp) {
+                        unfulfilledOrder.quantity -= quantityTraded;
+                        unfulfilledOrder.filledQuantity += quantityTraded;
+                        unfulfilledOrder.matchedOrderList.push(matchedOrder);
+                        this.orderBook.filledOrderList.push({
+                            ...unfulfilledOrder,
+                            quantity: quantityTraded
+                        });
+    
+                        if(unfulfilledOrder.quantity === 0) {
+                            delete this.orderBook.matchedOrdersQueue[unfulfilledOrderId];
+                            this.orderBook.removeOrder(unfulfilledOrder);
+                            console.log("ORDER_FILLED:", unfulfilledOrder);
+                        }
+                    } else {
+                        throw `Something went wrong while connecting to ${matchedOrder.exchangeId}`;
                     }
-                } else {
-                    throw `Error while connecting with ${matchedOrder.exchangeId}`;
+                } catch (err) {
+                    console.log(err);
                 }
+                
             }
         }
     }

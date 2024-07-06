@@ -3,8 +3,8 @@ const { ORDER_TYPE } = require('../constants');
 
 class OrderBook {
     constructor() {
-        this.buyOrders = {};
-        this.sellOrders = {}; 
+        this.buyOrders = {}; // sorted in decreasing order 
+        this.sellOrders = {}; // sorted in increasing order
         this.filledOrderList = [];
         this.matchedOrdersQueue = {};
     }
@@ -39,7 +39,7 @@ class OrderBook {
     }
 
     /**
-     * Mathes orders with present orders in the current exchange.
+     * Matches orders with present orders in the current exchange.
      * @param   order
      * @returns un-filled order or undefined in case of complete match
      */
