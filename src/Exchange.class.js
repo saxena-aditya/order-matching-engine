@@ -3,8 +3,6 @@ const Order = require('./models/Order.class');
 const OrderBook = require('./models/OrderBook.class');
 const { PeerRPCServer, PeerRPCClient } = require('grenache-nodejs-http');
 const { MESSAGE_TYPE } = require('./constants');
-const { debugPort } = require('process');
-const { debugPrint } = require('./util');
 const BROADCAST_SIGNAL = "broadcast";
 
 class Exchange {
@@ -28,6 +26,9 @@ class Exchange {
 
         this.link.startAnnouncing(BROADCAST_SIGNAL, this.port, {});
         this.link.startAnnouncing(this.exchangeId, this.port, {})
+        setInterval(() => {
+            this.processMatchedOrderQueue();
+        }, 1000);
         console.log("Exchange running: ", this.exchangeId);
     }
 
@@ -57,16 +58,10 @@ class Exchange {
                         this.orderBook.matchedOrdersQueue[unfilledOrder.id] = [matchedOrder];
                 }
             ));
-
-            console.log("Matched order queue: ", this.orderBook.matchedOrdersQueue);
-            this.processMatchedOrderQueue();
-
         });
     }
 
     onRequest(rid, key, payload, handler) {
-        console.log("request recieved", rid, key, payload);
-
         switch (key) {
             case BROADCAST_SIGNAL:
                 this.handleBroadcastMessage(payload, handler);
@@ -108,7 +103,6 @@ class Exchange {
                 }
 
                 console.log("Order:", order.id, " filling complete");
-                this.orderBook.getOrderBook();
                 handler.reply(null, true);
                 break;
             default:
@@ -118,13 +112,11 @@ class Exchange {
     }
 
     async processMatchedOrderQueue() {
-        if(this.orderBook.matchedOrdersQueue.length === 0) return;
+        if(Object.keys(this.orderBook.matchedOrdersQueue).length === 0) return;
 
-        console.log("Processing matchedOrdersQueue, ", this.orderBook.matchedOrdersQueue);
         for (const unfulfilledOrderId of Object.keys(this.orderBook.matchedOrdersQueue)) {
             const matchedOrderList = this.orderBook.matchedOrdersQueue[unfulfilledOrderId];
             const unfulfilledOrder = this.orderBook.getOrderById(unfulfilledOrderId);
-            console.debug("Found unfilled order details: ", unfulfilledOrderId);
             if(!unfulfilledOrder) {
                 delete this.orderBook.matchedOrdersQueue[unfulfilledOrderId];
             }
@@ -147,27 +139,28 @@ class Exchange {
                     matchedOrder: unfulfilledOrder
                 });
 
-                unfulfilledOrder.quantity -= quantityTraded;
-                unfulfilledOrder.filledQuantity += quantityTraded;
-                unfulfilledOrder.matchedOrderList.push(matchedOrder);
-                this.orderBook.filledOrderList.push({
-                    ...unfulfilledOrder,
-                    quantity: quantityTraded
-                });
+                if(resp) {
+                    unfulfilledOrder.quantity -= quantityTraded;
+                    unfulfilledOrder.filledQuantity += quantityTraded;
+                    unfulfilledOrder.matchedOrderList.push(matchedOrder);
+                    this.orderBook.filledOrderList.push({
+                        ...unfulfilledOrder,
+                        quantity: quantityTraded
+                    });
 
-                console.log("exex,", unfulfilledOrder)
-
-                if(unfulfilledOrder.quantity === 0) {
-                    delete this.orderBook.matchedOrdersQueue[unfulfilledOrderId];
-                    this.orderBook.removeOrder(unfulfilledOrder);
-                    console.log("ORDER_FILLED:", unfulfilledOrder);
+                    if(unfulfilledOrder.quantity === 0) {
+                        delete this.orderBook.matchedOrdersQueue[unfulfilledOrderId];
+                        this.orderBook.removeOrder(unfulfilledOrder);
+                        console.log("ORDER_FILLED:", unfulfilledOrder);
+                    }
+                } else {
+                    throw `Error while connecting with ${matchedOrder.exchangeId}`;
                 }
             }
         }
     }
 
     messageSourceExchange(exchangeId, payload) {
-        console.log("Making request to Exchange:", exchangeId);
         return new Promise((resolve, reject) => {
             this.client.request(exchangeId, payload, {},(err, result) => {
                if(err) {
@@ -180,7 +173,6 @@ class Exchange {
     }
 
     broadcast() {
-        console.log("broadcasting");
         this.client.map(BROADCAST_SIGNAL, this.exchangeId, {}, (err, result) => {
             if(err) throw err;
             console.log("result: ", result);

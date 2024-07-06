@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { ORDER_TYPE } = require('../constants');
+
 class Order {
     constructor(type, coin, quantity, price, exchangeId) {
         this.validateOrder(type);

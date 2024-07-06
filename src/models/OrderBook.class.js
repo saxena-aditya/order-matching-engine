@@ -10,7 +10,6 @@ class OrderBook {
     }
 
     addOrder(order) {
-        console.log("Adding order:", order);
         if(!(order.type in this.buyOrders)) {
             this.buyOrders[order.coin] = [];
             this.sellOrders[order.coin] = [];
