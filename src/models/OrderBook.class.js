@@ -82,11 +82,26 @@ class OrderBook {
                 break;
             }
         }
-        
+
         // return pending order state after matching.
         return type === ORDER_TYPE.BUY ? 
             this.buyOrders[coin].find(o => o.id === id) :
             this.sellOrders[coin].find(o => o.id === id);
+    }
+
+    /**
+     * Tries to find matching orders w.r.t the given order.
+     * @param type, coin, price
+     * @returns List of matching order or empty list if no match found
+     */ 
+    findMatchingOrders({type, coin, price}) {
+        if(type === ORDER_TYPE.BUY && this.sellOrders[coin]) {
+            return this.sellOrders[coin].filter(sellOrder => sellOrder.price <= price)
+        } else if(this.buyOrders[coin]) {
+            return this.buyOrders[coin].filter(buyOrder => buyOrder.price >= price);
+        }
+
+        return [];
     }
 
     getOrderBook() {

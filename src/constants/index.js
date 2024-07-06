@@ -1,5 +1,5 @@
 const MESSAGE_TYPE = Object.freeze({
-    ORDER_PLACES: 'order_placed',
+    ORDER_PLACED: 'order_placed',
     ORDER_FILLED: 'order_filled',
     FILL_ORDER: 'fill_order'
 });
