@@ -25,6 +25,7 @@ For the scope of this service, each node can send message to itself and other no
 * Execute `npm run grapes` to start grapes server.
 * To simulate the trades, you can use multiple terminals to execute the commands
    * `$ node sim.js <PORT> exec <ORDER_TYPE> <COIN> <QUANTITY> <PRICE>`
+     * Sample - `$ node sim.js 1450 exec SELL BTC 5 1000`
    * `PORT` - Any system port eg. 1337
    * `ORDER_TYPE` - Type of order. Use either `BUY` or `SELL`
    * `COIN` - Type of Coin/stock you are trading, eg. BTC
@@ -40,3 +41,18 @@ For the scope of this service, each node can send message to itself and other no
 * Improve error handling and retries.
 * Move OrderBook to Blockchain or DDB for persistance.
 * Re-factor Exchange.js class to abstract out message handlers.
+
+# Frequent Errors
+
+```
+/mnt/e/Projects/peer-to-peer/order-matching-engine/node_modules/grenache-nodejs-http/lib/TransportRPCClient.js:89
+        this.handleReply(req.rid, new Error(`ERR_REQUEST_GENERIC: ${err.message}`))
+                                  ^
+
+Error: ERR_REQUEST_GENERIC: connect ECONNREFUSED 127.0.0.1:1467
+    at /mnt/e/Projects/peer-to-peer/order-matching-engine/node_modules/grenache-nodejs-http/lib/TransportRPCClient.js:89:35
+    at cb (/mnt/e/Projects/peer-to-peer/order-matching-engine/node_modules/grenache-nodejs-http/lib/TransportRPCClient.js:134:7)
+    at Request._callback (/mnt/e/Projects/peer-to-peer/order-matching-engine/node_modules/grenache-nodejs-http/lib/TransportRPCClient.js:139:16)
+```
+
+If you face an error like above while running the service, just try and restart Greapes by ending the Grapes process and restart using `npm run grapes` command.
